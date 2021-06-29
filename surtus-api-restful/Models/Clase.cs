@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+
 namespace surtus_api_restful.Models
 {
     public class Clase : IIdAutogenerado<long>
@@ -9,6 +11,7 @@ namespace surtus_api_restful.Models
         public string Video { get; set; }
         public long IdModulo { get; set; }
 
-        public virtual Modulo Modulo { get;set;}
+        public virtual Modulo Modulo { get; set;}
+        public virtual ICollection<InscritoClase> InscritoClases { get; set; }
     }
 }

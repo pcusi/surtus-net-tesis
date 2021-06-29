@@ -22,14 +22,18 @@ namespace surtus_api_restful.Controllers
         [HttpPost("listar")]
         public async Task<DatosClaseResponse[]> ListarModulos([FromBody] ListarClaseModuloRequest request)
         {
+            var userId = Convert.ToInt64(User.FindFirst("UserId").Value);
+
             var clases = await _db.Clases
-                .Where(c => c.IdModulo == request.IdModulo)
+                .Join(_db.InscritoClases, c => c.Id, ic => ic.IdClase,
+                (c, ic) => new { c, ic })
+                .Where(c => c.c.IdModulo == request.IdModulo && c.ic.IdInscrito == userId)
                 .Select(c => new DatosClaseResponse
                 {
-                    Id = c.Id,
-                    Nombre = c.Nombre,
-                    Imagen = c.Imagen,
-                    Video = c.Video
+                    Id = c.c.Id,
+                    Nombre = c.c.Nombre,
+                    Imagen = c.c.Imagen,
+                    Visto = c.ic.Visto
                 }).ToArrayAsync();
 
             return clases;
@@ -51,6 +55,45 @@ namespace surtus_api_restful.Controllers
             await _db.SaveChangesAsync();
 
             return "Clase creada.";
+        }
+
+        [HttpPost("visto")]
+        public async Task<IActionResult> ClaseVista([FromBody] ClaseVistaRequest request)
+        {
+            var userId = Convert.ToInt64(User.FindFirst("UserId").Value);
+
+            var inscritoClase = await _db.InscritoClases
+                .Where(ic => ic.IdClase == request.IdClase && ic.IdInscrito == userId)
+                .SingleOrDefaultAsync();
+
+            if (inscritoClase != null)
+            {
+                inscritoClase.Visto = true;
+                await _db.SaveChangesAsync();
+            } else
+            {
+                return StatusCode(203);
+            }
+
+            var inscritoModulo = await _db.InscritoModulos
+                .Where(im => im.IdModulo == request.IdModulo)
+                .SingleOrDefaultAsync();
+
+            var claseCount = await _db.Clases.Where(m => m.IdModulo == request.IdModulo).CountAsync();
+
+            var inscritoClaseCount = await _db.InscritoClases
+                .Where(ic => ic.IdInscrito == userId
+                && ic.Visto == true
+                && ic.Clase.IdModulo == request.IdModulo)
+                .CountAsync();
+
+            decimal frmAvance = ((decimal)inscritoClaseCount / claseCount * 100);
+
+            inscritoModulo.Avance = frmAvance;
+
+            await _db.SaveChangesAsync();
+
+            return StatusCode(200);
         }
     }
 }

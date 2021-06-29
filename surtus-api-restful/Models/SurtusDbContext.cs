@@ -12,6 +12,8 @@ namespace surtus_api_restful.Models
         public DbSet<Modulo> Modulos { get; set; }
         public DbSet<Reto> Retos { get; set; }
         public DbSet<EvaluacionReto> EvaluacionRetos { get; set; }
+        public DbSet<InscritoModulo> InscritoModulos { get; set; }
+        public DbSet<InscritoClase> InscritoClases { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -82,6 +84,29 @@ namespace surtus_api_restful.Models
                 entity.Property(e => e.Estado).IsRequiredVariableLengthString(20, false);
 
                 entity.MapearUnoMuchosBidireccional(e => e.Reto, e => e.EvaluacionRetos, e => e.IdReto);
+            });
+
+            builder.Entity<InscritoModulo>(entity =>
+            {
+                entity.ToTable(nameof(InscritoModulo));
+
+                entity.HasKey(e => new { e.IdInscrito, e.IdModulo });
+
+                entity.Property(e => e.Avance).HasPrecision(5, 2);
+
+                entity.MapearUnoMuchosBidireccional(e => e.Inscripcion, e => e.InscritoModulos, e => e.IdInscrito);
+                entity.MapearUnoMuchosBidireccional(e => e.Modulo, e => e.InscritoModulos, e => e.IdModulo);
+            });
+
+            builder.Entity<InscritoClase>(entity =>
+            {
+                entity.ToTable(nameof(InscritoClase));
+
+                entity.HasKey(e => new { e.IdInscrito, e.IdClase });
+
+                entity.MapearUnoMuchosBidireccional(e => e.Inscripcion, e => e.InscritoClases, e => e.IdInscrito);
+                entity.MapearUnoMuchosBidireccional(e => e.Clase, e => e.InscritoClases, e => e.IdClase);
+
             });
         }
     }

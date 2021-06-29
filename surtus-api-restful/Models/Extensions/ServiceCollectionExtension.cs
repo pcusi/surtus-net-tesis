@@ -16,7 +16,6 @@ namespace surtus_api_restful.Models
                 {
                     opts.EnableSensitiveDataLogging();
                 }
-                //opts.UseSqlServer(connString);
                 opts.UseSqlServer(connString,
                 sqlServerOptionsAction: sqlOptions =>
                 {
