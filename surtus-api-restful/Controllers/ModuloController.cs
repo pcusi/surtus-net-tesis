@@ -35,6 +35,7 @@ namespace surtus_api_restful.Controllers
             return modulos;
         }
 
+        [AllowAnonymous]
         [HttpPost("agregar")]
         public async Task<string> AgregarModulo([FromBody] RegistrarModuloRequest request)
         {
@@ -54,14 +55,14 @@ namespace surtus_api_restful.Controllers
 
 
         [HttpPost("inscritoModulo")]
-        public async Task<IActionResult> InscripcionPorModulo([FromBody] RegistrarInscritoModuloRequest request)
+        public async Task<string> InscripcionPorModulo([FromBody] RegistrarInscritoModuloRequest request)
         {
 
             var userId = Convert.ToInt64(User.FindFirst("UserId").Value);
 
             var encontrarInscritoModulo = await _db.InscritoModulos
                 .Where(im => im.IdModulo == request.IdModulo && im.IdInscrito == userId)
-                .FirstOrDefaultAsync();
+                .SingleOrDefaultAsync();
 
             var inscritoModulo = new InscritoModulo();
             var inscritoClase = new InscritoClase();
@@ -76,7 +77,8 @@ namespace surtus_api_restful.Controllers
 
                 await _db.SaveChangesAsync();
 
-                var encontrarClaseModulo = await _db.Clases.Where(m => m.IdModulo == request.IdModulo).ToArrayAsync();
+                var encontrarClaseModulo = await _db.Clases
+                    .Where(m => m.IdModulo == request.IdModulo).ToArrayAsync();
                 var claseCount = await _db.Clases.Where(m => m.IdModulo == request.IdModulo).CountAsync();
 
                 for (var i = 0; i < claseCount; i++)
@@ -105,12 +107,13 @@ namespace surtus_api_restful.Controllers
                     }
                 }
 
-            } else
+            }
+            else
             {
-                return StatusCode(203);
+                return _stringLocalizer["NoInscrito", 400];
             }
 
-            return StatusCode(200);
+            return "Inscrito!";
         }
     }
 }

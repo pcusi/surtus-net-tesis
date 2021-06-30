@@ -20,6 +20,9 @@
     <Folder Include="Dtos\Requests\Clase\" />
     <Folder Include="Dtos\Requests\Reto\" />
     <Folder Include="Dtos\Responses\Reto\" />
+    <Folder Include="Backup\" />
+    <Folder Include="Dtos\Responses\Glosario\" />
+    <Folder Include="Dtos\Requests\Glosario\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.6" />

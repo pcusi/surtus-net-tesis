@@ -45,8 +45,7 @@ namespace surtus_api_restful.Controllers
 
         [AllowAnonymous]
         [HttpPost("iniciarSesion")]
-        [Consumes("application/x-www-form-urlencoded")]
-        public async Task<DatosInscritoAutenticadoResponse> IniciarSesion([FromForm] IniciarSesionRequest request)
+        public async Task<DatosInscritoAutenticadoResponse> IniciarSesion([FromBody] IniciarSesionRequest request)
         {
             string token = "";
 
@@ -93,7 +92,7 @@ namespace surtus_api_restful.Controllers
 
         [Authorize]
         [HttpGet("datos")]
-        public async Task<DatosInscritoResponse> DatosInscrito()
+        public async Task<ParametrosInscritoResponse> DatosInscrito()
         {
             var userId = Convert.ToInt64(User.FindFirst("UserId").Value);
             DatosInscritoResponse inscrito = null;
@@ -107,7 +106,30 @@ namespace surtus_api_restful.Controllers
                     Nivel = i.Nivel
                 }).SingleOrDefaultAsync();
 
-            return inscrito;
+            var totalModulo = await _db.Modulos
+                .Where(m => m.Nivel == inscrito.Nivel)
+                .CountAsync();
+
+            var inscritoModulo = await _db.InscritoModulos
+                .Where(im => im.IdInscrito == userId)
+                .ToArrayAsync();
+
+            var avance = 0;
+            decimal total = 0;
+
+            foreach (var im in inscritoModulo)
+            {
+
+                total += im.Avance;
+
+                avance = (int)(total / totalModulo);
+            }
+
+            return new ParametrosInscritoResponse
+            {
+                Inscrito = inscrito,
+                Avance = avance
+            };
         }
     }
 }

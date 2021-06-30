@@ -7,7 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using surtus_api_restful.Dtos.Requests.Clase;
+using surtus_api_restful.Dtos.Requests.Glosario;
 using surtus_api_restful.Dtos.Responses.Clase;
+using surtus_api_restful.Dtos.Responses.Glosario;
 using surtus_api_restful.Dtos.Responses.Modulo;
 using surtus_api_restful.Models;
 using surtus_api_restful.Resources;
@@ -39,6 +41,7 @@ namespace surtus_api_restful.Controllers
             return clases;
         }
 
+        [AllowAnonymous]
         [HttpPost("agregar")]
         public async Task<string> AgregarClase([FromBody] RegistrarClaseRequest request)
         {
@@ -46,7 +49,6 @@ namespace surtus_api_restful.Controllers
             {
                 Nombre = request.Nombre,
                 Imagen = request.Imagen,
-                Video = request.Video,
                 IdModulo = request.IdModulo
             };
 
@@ -55,6 +57,45 @@ namespace surtus_api_restful.Controllers
             await _db.SaveChangesAsync();
 
             return "Clase creada.";
+        }
+
+        [AllowAnonymous]
+        [HttpGet("listarGlosario")]
+        public async Task<DatosGlosarioResponse[]> ListarGlosario()
+        {
+            var glosario = await _db.Clases
+                .Join(_db.Modulos, c => c.IdModulo, m => m.Id,
+                (c, m) => new { c, m })
+                .OrderBy(c => c.c.Nombre)
+                .Select(c => new DatosGlosarioResponse
+                {
+                    Id = c.c.Id,
+                    Nombre = c.c.Nombre,
+                    Imagen = c.c.Imagen,
+                    ModuloNombre = c.m.Nombre
+                }).ToArrayAsync();
+
+            return glosario;
+        }
+
+        [AllowAnonymous]
+        [HttpPost("filtrarGlosario")]
+        public async Task<DatosGlosarioResponse[]> FiltrarGlosario([FromBody] FiltrarGlosarioRequest request)
+        {
+            var glosario = await _db.Clases
+                .Join(_db.Modulos, c => c.IdModulo, m => m.Id,
+                (c, m) => new { c, m })
+                .Where(c => c.c.Nombre.Contains(request.Filtro))
+                .OrderBy(c => c.c.Nombre)
+                .Select(c => new DatosGlosarioResponse
+                {
+                    Id = c.c.Id,
+                    Nombre = c.c.Nombre,
+                    Imagen = c.c.Imagen,
+                    ModuloNombre = c.m.Nombre
+                }).ToArrayAsync();
+
+            return glosario;
         }
 
         [HttpPost("visto")]
@@ -76,7 +117,7 @@ namespace surtus_api_restful.Controllers
             }
 
             var inscritoModulo = await _db.InscritoModulos
-                .Where(im => im.IdModulo == request.IdModulo)
+                .Where(im => im.IdModulo == request.IdModulo && im.IdInscrito == userId)
                 .SingleOrDefaultAsync();
 
             var claseCount = await _db.Clases.Where(m => m.IdModulo == request.IdModulo).CountAsync();

@@ -53,7 +53,6 @@ namespace surtus_api_restful.Models
 
                 entity.Property(e => e.Nombre).IsRequiredVariableLengthString(50, false);
                 entity.Property(e => e.Imagen).IsRequiredVariableLengthString(200, false);
-                entity.Property(e => e.Video).IsRequiredVariableLengthString(200, false);
 
                 entity.MapearUnoMuchosUnidireccional(e => e.Modulo, e => e.IdModulo);
 
