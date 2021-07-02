@@ -71,7 +71,9 @@ namespace surtus_api_restful
 
             services.AddLocalization();
 
-            services.AddSurtusContext(Configuration, Environment.IsDevelopment());
+            var conexion = Configuration.GetConnectionString("DefaultConnection");
+
+            services.AddDbContext<SurtusDbContext>(options => options.UseSqlServer(conexion));
 
             services.ConfigureApiWrapperBehavior();
 
@@ -100,10 +102,6 @@ namespace surtus_api_restful
             if (env.IsDevelopment() || env.EnvironmentName == "Local")
             {
                 app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseHttpsRedirection();
             }
 
             app.UseRequestLocalization();
