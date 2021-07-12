@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Drawing;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -10,6 +12,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using QRCoder;
 using surtus_api_restful.Dtos.Requests.Inscripcion;
 using surtus_api_restful.Dtos.Responses.Inscripcion;
 using surtus_api_restful.Models;
@@ -99,7 +103,8 @@ namespace surtus_api_restful.Controllers
 
             inscrito = await _db.Inscripciones
                 .Where(i => i.Id == userId)
-                .Select(i => new DatosInscritoResponse {
+                .Select(i => new DatosInscritoResponse
+                {
                     Nombres = i.Nombres,
                     Apellidos = i.Apellidos,
                     Usuario = i.Usuario,
@@ -129,6 +134,54 @@ namespace surtus_api_restful.Controllers
             {
                 Inscrito = inscrito,
                 Avance = avance
+            };
+        }
+
+        [Authorize]
+        [HttpGet("obtenerMarcador")]
+        public async Task<DatosMarcadorInscritoResponse> ObtenerMarcadorPorNota()
+        {
+            var userId = Convert.ToInt64(User.FindFirst("UserId").Value);
+
+            var retosCount = await _db.Retos.Where(r => r.IdInscrito == userId).CountAsync();
+
+            var retosInscrito = await _db.Retos.Where(r => r.IdInscrito == userId && r.Estado == "E").ToArrayAsync();
+
+            double notaInscrito = 0.0;
+
+            double notaTotal = 0.0;
+
+            var marcador = "";
+
+            foreach (var reto in retosInscrito)
+            {
+                var retosEvaluados = await _db.EvaluacionRetos.Where(er => er.IdReto == reto.Id).ToArrayAsync();
+
+                foreach (var retoEvaluado in retosEvaluados)
+                {
+                    notaInscrito += retoEvaluado.Nota;
+
+                    notaTotal = (double)(notaInscrito / retosCount);
+                }
+
+            }
+
+            //puede pasar que la nota puede redondearse a una condición y pasar a otra cara. validar esto
+            if (notaTotal >= 4)
+            {
+                marcador = "https://res.cloudinary.com/doozucb0w/image/upload/v1626055621/marcadores/happy_marker_w8oipt.jpg";
+            } else if (notaTotal >= 3 && notaTotal < 4)
+            {
+                marcador = "https://res.cloudinary.com/doozucb0w/image/upload/v1626055621/marcadores/neutral_marker_iuqmjw.jpg";
+            } else if (notaTotal < 3)
+            {
+                marcador = "https://res.cloudinary.com/doozucb0w/image/upload/v1626055621/marcadores/sad_marker_roivsd.jpg";
+            }
+
+            return new DatosMarcadorInscritoResponse
+            {
+                Marcador = marcador,
+                Nota = notaTotal,
             };
         }
     }

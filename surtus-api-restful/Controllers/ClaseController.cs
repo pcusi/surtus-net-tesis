@@ -78,26 +78,6 @@ namespace surtus_api_restful.Controllers
             return glosario;
         }
 
-        [AllowAnonymous]
-        [HttpPost("filtrarGlosario")]
-        public async Task<DatosGlosarioResponse[]> FiltrarGlosario([FromBody] FiltrarGlosarioRequest request)
-        {
-            var glosario = await _db.Clases
-                .Join(_db.Modulos, c => c.IdModulo, m => m.Id,
-                (c, m) => new { c, m })
-                .Where(c => c.c.Nombre.Contains(request.Filtro))
-                .OrderBy(c => c.c.Nombre)
-                .Select(c => new DatosGlosarioResponse
-                {
-                    Id = c.c.Id,
-                    Nombre = c.c.Nombre,
-                    Imagen = c.c.Imagen,
-                    ModuloNombre = c.m.Nombre
-                }).ToArrayAsync();
-
-            return glosario;
-        }
-
         [HttpPost("visto")]
         public async Task<IActionResult> ClaseVista([FromBody] ClaseVistaRequest request)
         {

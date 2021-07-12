@@ -6,6 +6,7 @@ namespace surtus_api_restful.Models
         public long IdReto { get; set; }
         public int Nota { get; set; }
         public string Estado { get; set; }
+        public long FechaFinalizacion { get; set; }
 
         public virtual Reto Reto { get; set; }
     }

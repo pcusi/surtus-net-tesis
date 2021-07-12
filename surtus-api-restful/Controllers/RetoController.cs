@@ -40,7 +40,8 @@ namespace surtus_api_restful.Controllers
                         .Select(er => new DatosEvaluacionRetoResponse
                         {
                             Nota = er.Nota,
-                            Estado = er.Estado
+                            Estado = er.Estado,
+                            FechaFinalizacion = er.FechaFinalizacion
                         }
                     ).ToArray()
                 }).ToArrayAsync();
@@ -86,6 +87,8 @@ namespace surtus_api_restful.Controllers
                 .Where(r => r.Id == request.IdReto && r.IdInscrito == userId)
                 .SingleOrDefaultAsync();
 
+            Random r = new Random();
+
             if (evaluacion == null)
             {
                 throw Error(_stringLocalizer["RetoNoEncontrado"], 400);
@@ -95,6 +98,7 @@ namespace surtus_api_restful.Controllers
                 {
 
                     var preguntasAleatorias = await _db.Clases
+                        .Where(c => c.IdModulo == request.IdModulo)
                         .OrderBy(c => Guid.NewGuid())
                         .Take(5)
                         .ToArrayAsync();
@@ -113,15 +117,15 @@ namespace surtus_api_restful.Controllers
 
                         #region Obtener Respuestas Aleatorias y Respuesta correcta
                         respuestas = await _db.Clases
-                             .Where(c => c.Nombre != preguntaAl.Nombre)
-                             .Select(r => new RespuestasResponse
-                             {
+                             .Where(c => c.Nombre != preguntaAl.Nombre && c.IdModulo == request.IdModulo)
+                             .Select(r => new RespuestasResponse {
                                  Id = r.Id,
                                  Nombre = r.Nombre,
                                  EsCorrecto = false
                              })
-                             .Take(3)
                              .OrderBy(c => Guid.NewGuid())
+                             .Skip(2)
+                             .Take(3)
                              .ToArrayAsync();
 
                         var respuestaCorrecta = await _db.Clases
@@ -140,7 +144,6 @@ namespace surtus_api_restful.Controllers
                         #endregion
 
                         #region Cambiar Posición del Array
-                        Random r = new Random();
                         var respuestaMixta = respuestasFinal.OrderBy(x => r.Next()).ToArray();
                         #endregion
 
@@ -180,6 +183,7 @@ namespace surtus_api_restful.Controllers
                     evaluacion.IdReto = request.IdReto;
                     evaluacion.Nota = request.Nota;
                     evaluacion.Estado = "Desaprobado";
+                    evaluacion.FechaFinalizacion = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
                     _db.EvaluacionRetos.Add(evaluacion);
 
@@ -191,6 +195,7 @@ namespace surtus_api_restful.Controllers
                     evaluacion.IdReto = request.IdReto;
                     evaluacion.Nota = request.Nota;
                     evaluacion.Estado = "Aprobado";
+                    evaluacion.FechaFinalizacion = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
                     _db.EvaluacionRetos.Add(evaluacion);
 
