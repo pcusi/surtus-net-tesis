@@ -149,21 +149,30 @@ namespace surtus_api_restful.Controllers
 
             double notaInscrito = 0.0;
 
-            double notaTotal = 0.0;
+            decimal notaTotal = 0;
 
             var marcador = "";
 
-            foreach (var reto in retosInscrito)
+            if (retosInscrito.Length > 0)
             {
-                var retosEvaluados = await _db.EvaluacionRetos.Where(er => er.IdReto == reto.Id).ToArrayAsync();
-
-                foreach (var retoEvaluado in retosEvaluados)
+                foreach (var reto in retosInscrito)
                 {
-                    notaInscrito += retoEvaluado.Nota;
+                    var retosEvaluados = await _db.EvaluacionRetos.Where(er => er.IdReto == reto.Id).ToArrayAsync();
 
-                    notaTotal = (double)(notaInscrito / retosCount);
+                    if (retosEvaluados.Length > 0)
+                    {
+                        foreach (var retoEvaluado in retosEvaluados)
+                        {
+                            notaInscrito += retoEvaluado.Nota;
+
+                            notaTotal = ((decimal)notaInscrito / retosCount);
+                        }
+                    }
+
                 }
-
+            } else
+            {
+                notaTotal = Convert.ToDecimal(notaTotal.ToString("0.0"));
             }
 
             //puede pasar que la nota puede redondearse a una condición y pasar a otra cara. validar esto
